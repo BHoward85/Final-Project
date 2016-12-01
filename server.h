@@ -19,21 +19,16 @@
 #define FALSE 0
 #define OPEN 0
 #define CLOSE 1
+#define BUFF_SIZE 80
 
 typedef struct
 {
 	int isFree;
 	int CID; // client_id
 	int CSN; // client_socket_number
+	char CC; // client channel
 	char *name;
 }Client;
-
-typedef struct
-{
-	char *nameOfChan;
-	char *chanMess;
-	int *userID;
-}Channel;
 
 void login(char *packet, int *offset);
 
@@ -50,4 +45,5 @@ void findUser(char *packet, int *offset);
 void userList(char *packet, int *offset);
 
 void pmUser(char *packet, int *offset);
+
 #endif
