@@ -20,6 +20,7 @@
 #include<sys/stat.h>
 #include<fcntl.h>
 #include<pthread.h>
+#include"packetManager.h"
 
 #define BUF_SIZE 500
 
