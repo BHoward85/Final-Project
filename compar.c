@@ -3,7 +3,7 @@
 
 //test sets for command parser
 
-// there is a memory bug if more than 3 string are in used
+// there is a memory bug if more than 3 strings are in used
 
 /**
  ** 	::syntax::
@@ -29,38 +29,39 @@
 
 #include "ComPar.h"
 
-#define MAX 44
+#define MAX 50
+#define MAX_MESS 42
 
 int main()
 {
-	char first[MAX] = "3s1255$pm <tim> : how are you?\n";
-	//char second[MAX] = "3s2255$ch <iOS>: \n";
-	char third[MAX] = "3g8255$ul<all>:\n";
-	//char forth[MAX] = "3g4255$ch<And>\n";
-	char fifth[MAX] = "$ch  //<And>\n";
+	char first[MAX] = "3s001255$pm <tim> : how are you?\n";
+	//char second[MAX] = "3s002255$ch <iOS>: \n";
+	char third[MAX] = "3g008255$ul<all>:\n";
+	//char forth[MAX] = "3g004255$ch<And>\n";
+	char fifth[MAX] = "$ch <And>\n";
 	int offset = 0;
 
 	if(first[offset] == '3')
 	{
-		offset += 6;
+		offset += 8;
 		comPar(first, &offset);
 		offset = 0;
 	}/*
 	if(second[offset] == '3')
 	{
-		offset += 6;
+		offset += 8;
 		comPar(second, &offset);
 		offset = 0;
 	}*/
 	if(third[offset] == '3')
 	{
-		offset += 6;
+		offset += 8;
 		comPar(third, &offset);
 		offset = 0;
 	}/*
 	if(forth[offset] == '3')
 	{
-		offset += 6;
+		offset += 8;
 		comPar(forth, &offset);
 		offset = 0;
 	}*/
@@ -73,10 +74,14 @@ void comPar(char *dataPack, int *offset)
 {
 	int n = 0;
 	int comType = 0;
-	char tempChar;
-	char command[MAX - (*offset)];
-	char comtag[MAX - (*offset)];
-	char mess[MAX - (*offset)];
+	char tempChar = '\0';
+	char command[MAX_MESS];
+	char comtag[MAX_MESS];
+	char mess[MAX_MESS];
+
+	//bzero(command, MAX - (*offset));
+	//bzero(comtag, MAX - (*offset));
+	//bzero(mess, MAX - (*offset));
 	
 	printf("dataPack: %s\n%d\n%d\n", dataPack, *offset, (MAX - (*offset)));
 	
@@ -97,7 +102,7 @@ void comPar(char *dataPack, int *offset)
 				}
 			}
 			printf("\n");
-			printf("tempChar: %c\ncommand: %s", tempChar, command);
+			printf("tempChar: %c\ncommand: %s\nn = %d\n", tempChar, command, n);
 			n = 0;
 			while(tempChar != '<')
 			{
@@ -118,9 +123,9 @@ void comPar(char *dataPack, int *offset)
 				}
 			}
 			printf("\n");
-			printf("%s", comtag);
+			printf("tempChar: %c\ncomTag %s\nn = %d\n", tempChar, comtag, n);
 			n = 0;
-			while(tempChar != ':')
+			while(tempChar != ':' && *offset < MAX)
 			{
 				tempChar = dataPack[(*offset)++];
 			}
@@ -151,4 +156,6 @@ int findCom(char *dataSeg)
 		return 1;
 	if( strcmp("pm", dataSeg) == 0 )
 		return 2;
+	else
+		return -1;
 }
