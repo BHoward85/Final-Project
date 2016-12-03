@@ -13,6 +13,7 @@ int stillConnected = 1;
 char room = 'g';
 char toUser[4];
 char  username[4];
+int idFromServer;
 
 char * login(int sockfd);
 char * packetbuilder(int command, char * message);
@@ -47,13 +48,13 @@ int main(int argc, char ** argv)
 		exit(1);
 	}//end of if statement for connection
 
-	login(sockfd);
-
 	//This part to set the default user to send incase of private message
 	for(index = 0; index < 4; index++)
 	{
 		toUser[index] = 'z';
 	}//end of for loop to create a default
+
+	login(sockfd);
 
 	printf("Socket:%d\n", sockfd);
 	pthread_create(&clReader, 0, (void *)clientReader, &sockfd);
@@ -72,30 +73,35 @@ char * login(int sockfd)
 	printf("please type your user name:\n");
 	fgets(username, 4, stdin);
 	write(sockfd, packetbuilder(1, "login"), 50);
+	char buffer[4];
+	read(sockfd, buffer, 4);
+	idFromServer = atoi(buffer);
 	return username;
 	//end getting username
 }//end o login
 
 char* packetbuilder(int command, char * message)
 {//TODO: take the command and message to build a packet and send it back so it can be written
-	char packet[50];
+	printf("starting to build packet\n");
+	char * packet = (char *)calloc(50, sizeof(char));
+	//bzero(packet, 50);
+	char charcommand = command + '0';
+	char charidFromServer = idFromServer + '0';
 	int index =0;
-	packet[0]=(char)command;
-	packet[1]=room;
-	for(index =2; index < 6; index++)
+	strncat(packet, &charcommand, sizeof(char));
+	strncat(packet, &room, sizeof(char));
+	strncat(packet, &charidFromServer, sizeof(int));
+	printf("entering for loops\n");
+	for(index = 0; index < 4; index ++)//Note for some reason can't do the math to offset come back later when not stupid
 	{
-		packet[index] = username[index-2];
-	}//end of for loop to add the user name
-	for(index = 6; index < 10; index ++)
-	{
-		packet[index] = toUser[index-6];
+		strncat(packet , &toUser[index], sizeof(char) * 4);
 	}//end of for loop to add a toUser to the packet
-	for(index = 10; index < 50 && message[index -10] != '\0'; index++)
+	for(index = 0; index < 40 && message[index] != '\0'; index++)
 	{
-		packet[index] = message[index -10];
+		strncat(packet, &message[index], sizeof(char));
 	}//end of forloop to build the package
-	printf("Finish  building the packet\n");
-	return &packet;
+	printf("Finish  building the packet: %s\n", packet);
+	return packet;
 }//end of packetbuilder
 
 void clientReader(int * socketfd)
@@ -125,7 +131,7 @@ void clientWriter(int *socketfd)
 {
 	//TODO:
 	char buffer[40];
-	char packet[44];
+	//char packet[44];
 	int writer = 0;
 	while(1)
 	{
@@ -134,8 +140,7 @@ void clientWriter(int *socketfd)
 		{
 			//TODO: create a call to figure out what the escape character wants to do.
 		}//end of if statement
-
-		if(strcmp(buffer, "quit\n") == 0 || writer == -1 || stillConnected == 0)
+		else if(strcmp(buffer, "quit\n") == 0 || writer == -1 || stillConnected == 0)
 		{
 			pthread_mutex_lock(&clilock);
 			write(*socketfd, "Bye!", strlen("Bye!") * sizeof(char));
@@ -143,8 +148,10 @@ void clientWriter(int *socketfd)
 			pthread_mutex_unlock(&clilock);
 			return;
 		}//end of if
-
-		writer = write(*socketfd, buffer, 40);
+		else
+		{
+			writer = write(*socketfd, packetbuilder(0, buffer), 40);
+		}//end of else
 		bzero(buffer, 40);
 
 
