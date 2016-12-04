@@ -1,7 +1,7 @@
 // Final Project
 // Server Code
 
-#include "chat_server.h"
+#include "chatserver.h"
 #include "packetmanager.h"
 
 cl clientTable[SERVER_SIZE];
@@ -156,8 +156,11 @@ void login(int conn_fd, int max_fd, int j)
 			clientTable[j].sockd = conn_fd;
 			clientTable[j].channel = chan;
 			strcat(clientTable[j].uname, data);
+			
+			// send client id back to client
 			pack(1, 's', 255, conn_fd, " ", packet);
 			write(conn_fd, packet, 50);
+			
 			fprintf(stdout, "added %d to clientTable[%d]\n", clientTable[j].sockd, j);
 			break;
 		} 
