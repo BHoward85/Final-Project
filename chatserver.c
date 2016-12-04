@@ -310,8 +310,10 @@ void sendPacket(char chan, int source, char data[MAX_MESS], int max_fd,  int j)
 
 void commandPacket(char packet[MAX], int source, int max_fd, int j)
 {
+	char retPacket[MAX] = " ";
 	char tag[MAX_MESS];
 	char data[MAX_MESS];
+	char tmp;
 	int comType;
 	int offset = 0;
 	
@@ -330,8 +332,42 @@ void commandPacket(char packet[MAX], int source, int max_fd, int j)
 		// change room
 		for(j = 0; j <= max_fd; j++)
 		{
-
+			if(tmp = tolower(tag[0]) == 'i')
+			{
+				if(clientTable[j].id == source && clientTable[j].channel != 'i')
+				{
+					printf("%d changed room to IOS\n", clientTable[j].id);
+					clientTable[j].channel = 'i';
+					pack(3, clientTable[j].channel, 255, clientTable[j].id, "Change room to IOS!", retPacket);
+					break;
+				}
+			}
+			else if(tmp = tolower(tag[0]) == 'a' && clientTable[j].channel != 'a')
+			{
+				if(clientTable[j].id == source)
+				{
+					printf("%d changed room to Android\n", clientTable[j].id);
+					clientTable[j].channel = 'a';
+					pack(3, clientTable[j].channel, 255, clientTable[j].id, "Change room to Android!", retPacket);
+					break;
+				}
+			}
+			else if(tmp = tolower(tag[0]) == 'g' && clientTable[j].channel != 'g')
+			{
+				if(clientTable[j].id == source)
+				{
+					printf("%d changed room to General\n", clientTable[j].id);
+					clientTable[j].channel = 'g';
+					pack(3, clientTable[j].channel, 255, clientTable[j].id, "Change room to General!", retPacket);
+					write(clientTable[j].id, retPacket, 50);
+					bzero(&retPacket, 50);
+					break;
+				}
+			}
 		}
+		printf("sending packet to %d\n", clientTable[j].id);
+		write(clientTable[j].id, retPacket, 50);
+		bzero(&retPacket, 50);
 		break;
 		
 		case 1:
