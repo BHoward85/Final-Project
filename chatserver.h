@@ -1,8 +1,8 @@
 // Final Project
 // Server Header
 
-#ifndef CHAT_SERVER_H
-#define CHAT_SERVER_H
+#ifndef CHATSERVER_H
+#define CHATSERVER_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,8 +24,9 @@ typedef struct Client
 	char channel; // client channel
 	char uname[UNAME_MAX];
 } cl;
-
+// login get username -> give id
 void login(int conn_fd, int max_fd, int id);
+// delegate what to do with packet
 void readPacket(char packet[MAX]);
 
 #endif
