@@ -75,6 +75,7 @@ char * login(int sockfd)
 	write(sockfd, packet, 50);
 	char buffer[50];
 	read(sockfd, buffer, 50);
+	printf("%s\n", buffer);
 	src = unpackDese(buffer);
 	return username;
 	//end getting username

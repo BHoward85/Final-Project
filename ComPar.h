@@ -11,7 +11,7 @@
 #define TRUE 1
 #define FALSE 0
 
-void comPar(char *dataPack, int *offset);
+int comPar(char *dataPack, int *offset, char* comTag, char* data);
 int findCom(char *dataSeg);
 
 #endif

@@ -17,7 +17,7 @@
 
 #include "packetManager.h"
 
-int main(int argc, char** argv)
+/*int main(int argc, char** argv)
 {
 	char packet[MAX] = " "; 	
 	int n = 0;
@@ -42,7 +42,7 @@ int main(int argc, char** argv)
 	chan = unpackChan(packet);
 	
 	printf("type : %d | chan : %c | sorce : %d | dese : %d | mess : %s\n", type, chan, sorce, dese, data);
-}
+}*/
 
 void pack(int type, char chan, int sorce, int dese, char* data, char* packet)
 {
@@ -97,10 +97,11 @@ char unpackChan(char* packet)
 int unpackSorce(char* packet)
 {
 	int n = 0;
+	int ndex = 0;
 	int offset = 2;
 	char subSet[3];
 	
-	for(int ndex = 0; ndex < 3; ndex++)
+	for(ndex = 0; ndex < 3; ndex++)
 		subSet[ndex] = packet[offset + ndex];
 		
 	charToInt(subSet, &n);
@@ -111,10 +112,11 @@ int unpackSorce(char* packet)
 int unpackDese(char* packet)
 {
 	int n = 0;
+	int ndex =0;
 	int offset = 5;
 	char subSet[3];
 	
-	for(int ndex = 0; ndex < 3; ndex++)
+	for(ndex = 0; ndex < 3; ndex++)
 		subSet[ndex] = packet[offset + ndex];
 	
 	charToInt(subSet, &n);
