@@ -365,7 +365,7 @@ void commandPacket(char packet[MAX], int source, int max_fd, int j)
 				}
 			}
 		}
-		printf("sending packet to %d\n", clientTable[j].id);
+		printf("Change room packet send to %d\n", clientTable[j].id);
 		write(clientTable[j].id, retPacket, 50);
 		bzero(&retPacket, 50);
 		break;
