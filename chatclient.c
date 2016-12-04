@@ -76,14 +76,10 @@ char * login(int sockfd)
 	write(sockfd, packet, 50);
 	char buffer[50];
 	read(sockfd, buffer, 50);
-<<<<<<< HEAD
-	//unpackMess(buffer, packet);
-=======
->>>>>>> 5c9809d39229e66ee9fdfc7d3afc468ecc6a2853
 	printf("%s\n", buffer);
 	src = unpackDese(buffer);
 	return username;
-	//end getting username
+	//end getting usernameo
 }//end o login
 
 /*
