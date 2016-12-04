@@ -1,8 +1,8 @@
 // Final Project
 // Server Header
 
-#ifndef SERVER_H
-#define SERVER_H
+#ifndef CHAT_SERVER_H
+#define CHAT_SERVER_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,12 +25,7 @@ typedef struct Client
 	char uname[UNAME_MAX];
 } cl;
 
-void login(char *packet, int *offset);
-void logout(char *packet, int *offset);
-void chanSwitch(char *packet, int *offset);
-void sendPacket(char *packet, int *offset);
-void findUser(char *packet, int *offset);
-void userList(char *packet, int *offset);
-void pmUser(char *packet, int *offset);
+void login(int conn_fd, int max_fd, int id);
+void readPacket(char packet[MAX]);
 
 #endif
