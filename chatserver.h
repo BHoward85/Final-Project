@@ -20,7 +20,7 @@
 typedef struct Client
 {
 	int is_open; // free slot
-	int sockd; // client_socket
+	int id; // client_socket
 	char channel; // client channel
 	char uname[UNAME_MAX];
 } cl;
