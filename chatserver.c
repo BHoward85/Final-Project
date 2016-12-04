@@ -103,13 +103,13 @@ int main(int argc, char **argv)
 							// find and remove from clientTable
 							for(j = 0; j <= max_fd; j++)
 							{
-								if(clientTable[j].sockd == conn_fd)
+								if(clientTable[j].id == conn_fd)
 								{
 									fprintf(stdout, "[ALERT] - %s disconnected!\n", inet_ntoa(cli_addr.sin_addr));
 									close(conn_fd);
 									FD_CLR(conn_fd, &rfd);
 									clientTable[j].is_open = 0;
-									clientTable[j].sockd = 0;
+									clientTable[j].id = 0;
 									clientTable[j].channel = 0;
 									bzero(&clientTable[j].uname, sizeof(clientTable[j].uname));
 								}
@@ -153,7 +153,7 @@ void login(int conn_fd, int max_fd, int j)
 		if(clientTable[j].is_open == 0)
 		{
 			clientTable[j].is_open = 1;
-			clientTable[j].sockd = conn_fd;
+			clientTable[j].id = conn_fd;
 			clientTable[j].channel = chan;
 			strcat(clientTable[j].uname, data);
 			
@@ -161,7 +161,7 @@ void login(int conn_fd, int max_fd, int j)
 			pack(1, 's', 255, conn_fd, " ", packet);
 			write(conn_fd, packet, 50);
 			
-			fprintf(stdout, "added %d to clientTable[%d]\n", clientTable[j].sockd, j);
+			fprintf(stdout, "added %d to clientTable[%d]\n", clientTable[j].id, j);
 			break;
 		} 
 		else
