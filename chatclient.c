@@ -72,9 +72,14 @@ char * login(int sockfd)
 	fgets(username, 15, stdin);
 	printf("username: %s\n", username);
 	pack(1, room, src, dest, username, packet);
+	printf("%s\n", packet);
 	write(sockfd, packet, 50);
 	char buffer[50];
 	read(sockfd, buffer, 50);
+<<<<<<< HEAD
+	//unpackMess(buffer, packet);
+=======
+>>>>>>> 5c9809d39229e66ee9fdfc7d3afc468ecc6a2853
 	printf("%s\n", buffer);
 	src = unpackDese(buffer);
 	return username;
@@ -134,7 +139,7 @@ void clientWriter(int *socketfd)
 {
 	//TODO:
 	char buffer[40];
-	char packet[] = " ";
+	char packet[50] = " ";
 	int writer = 0;
 	while(1)
 	{
@@ -142,9 +147,22 @@ void clientWriter(int *socketfd)
 		if(buffer[0] == '$')
 		{
 			//TODO: create a call to figure out what the escape character wants to do.
-			pack(3, room, src, dest, buffer, packet);
-			printf("%s\n", packet);
-			write(*socketfd, packet, 50);
+			if(strcmp("$logout\n", buffer) == 0)
+			{
+				pack(2, room, src, dest, buffer, packet);
+				write(*socketfd, packet, 50);
+				pthread_mutex_lock(&clilock);
+				stillConnected = 0;
+				pthread_mutex_unlock(&clilock);
+				return;
+			}//end of if
+			else
+			{
+				pack(3, room, src, dest, buffer, packet);
+				printf("%s\n", packet);
+				write(*socketfd, packet, 50);
+				bzero(packet, 50);
+			}//end of else
 		}//end of if statement
 		else if(strcmp(buffer, "quit\n") == 0 || writer == -1 || stillConnected == 0)
 		{
@@ -159,6 +177,7 @@ void clientWriter(int *socketfd)
 			pack(0, room, src, dest, buffer, packet);
 			printf("%s: is now going write\n", packet);
 			writer = write(*socketfd, packet, 40);
+			bzero(packet, 50);
 			//free(packet);
 		}//end of else
 		bzero(buffer, 40);
