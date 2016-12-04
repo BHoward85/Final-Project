@@ -139,6 +139,7 @@ void login(int conn_fd, int max_fd, int j)
 	char chan = ' ';
 	int source = 0;
 	int dese = 0;
+	int len = 0;
 	
 	read(conn_fd, packet, 50);
 	
@@ -159,6 +160,12 @@ void login(int conn_fd, int max_fd, int j)
 			clientTable[j].id = conn_fd;
 			clientTable[j].channel = chan;
 			strcat(clientTable[j].uname, data);
+			
+			len = strlen(clientTable[j].uname);
+			if(clientTable[j].uname[len - 1] == '\n')
+			{
+				clientTable[j].uname[len - 1] = 0;
+			}
 			
 			// send client id back to client
 			pack(1, 's', 255, conn_fd, " ", packet);
@@ -219,18 +226,11 @@ void logout(fd_set *rfd, char chan, int source, int max_fd, int j)
 	char packet[MAX] = " ";
 	char on_exit[MAX_MESS] = " has left the room!";
 	char *tmp = strdup(on_exit);
-	int len = 0;
 	
 	for(j = 0; j <= max_fd; j++)
 	{
 		if(clientTable[j].id == source)
-		{
-			len = strlen(clientTable[j].uname);
-			if(clientTable[j].uname[len - 1] == '\n')
-			{
-				clientTable[j].uname[len - 1] = 0;
-			}
-			
+		{	
 			strcpy(on_exit, clientTable[j].uname);
 			strcat(on_exit, tmp);
 			
@@ -245,6 +245,7 @@ void logout(fd_set *rfd, char chan, int source, int max_fd, int j)
 			break;
 		}
 	}
+	// broadcast message to other 
 	for(j = 0; j <= max_fd; j++)
 	{
 		if(clientTable[j].channel == chan)
