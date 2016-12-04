@@ -99,6 +99,7 @@ int main(int argc, char **argv)
 				{
 					if(FD_ISSET(i, &c_rfd))
 					{	
+						// much easier with recv
 						if((rec = recv(i, packet, sizeof(packet), 0)) <= 0)
 						{
 							if(rec == 0)
@@ -245,7 +246,7 @@ void logout(fd_set *rfd, char chan, int source, int max_fd, int j)
 			break;
 		}
 	}
-	// broadcast message to other 
+	// broadcast message to others in room
 	for(j = 0; j <= max_fd; j++)
 	{
 		if(clientTable[j].channel == chan)
@@ -363,6 +364,10 @@ void commandPacket(char packet[MAX], int source, int max_fd, int j)
 					bzero(&retPacket, 50);
 					break;
 				}
+			}
+			else
+			{
+				// either already in the room or client asked to be in room that is not available
 			}
 		}
 		printf("Change room packet send to %d\n", clientTable[j].id);
