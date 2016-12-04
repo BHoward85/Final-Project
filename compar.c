@@ -34,17 +34,20 @@
 
 int main()
 {
+	char tag[MAX_MESS];
+	char data[MAX_MESS];
+	int comType;
 	char first[MAX] = "3s001255$pm <tim> : how are you?\n";
 	//char second[MAX] = "3s002255$ch <iOS>: \n";
-	char third[MAX] = "3g008255$ul<all>:\n";
+	//char third[MAX] = "3g008255$ul<all>:\n";
 	//char forth[MAX] = "3g004255$ch<And>\n";
-	char fifth[MAX] = "$ch <And>\n";
+	//char fifth[MAX] = "$ch <And>\n";
 	int offset = 0;
 
 	if(first[offset] == '3')
 	{
 		offset += 8;
-		comPar(first, &offset);
+		comType = comPar(first, &offset, tag, data);
 		offset = 0;
 	}/*
 	if(second[offset] == '3')
@@ -52,7 +55,7 @@ int main()
 		offset += 8;
 		comPar(second, &offset);
 		offset = 0;
-	}*/
+	}
 	if(third[offset] == '3')
 	{
 		offset += 8;
@@ -66,18 +69,27 @@ int main()
 		offset = 0;
 	}*/
 	offset = 0;
-	comPar(fifth, &offset);
+	//comPar(fifth, &offset);
+	
+	printf("comType = %d, tag = %s, data = %s\n", comType, tag, data);
 	return 0;
 }
 
-void comPar(char *dataPack, int *offset)
+int comPar(char *dataPack, int *offset, char* comTag, char* data)
 {
 	int n = 0;
+	int lTag = 0;
+	int lMess = 0;
+	int lCom = 0;
 	int comType = 0;
+	int tdex;
+	int mdex;
+	int cdex;
 	char tempChar = '\0';
-	char command[MAX_MESS];
-	char comtag[MAX_MESS];
-	char mess[MAX_MESS];
+	char command[MAX_MESS] = " ";
+	char comtag[MAX_MESS] = " ";
+	char mess[MAX_MESS] = " ";
+	char comsec[MAX_MESS] = " ";
 
 	//bzero(command, MAX - (*offset));
 	//bzero(comtag, MAX - (*offset));
@@ -99,6 +111,7 @@ void comPar(char *dataPack, int *offset)
 				{
 					printf("%c", tempChar);
 					command[n++] = tempChar;
+					lCom++;
 				}
 			}
 			printf("\n");
@@ -119,6 +132,7 @@ void comPar(char *dataPack, int *offset)
 					{
 						printf("%c", tempChar);
 						comtag[n++] = tempChar;
+						lTag++;
 					}
 				}
 			}
@@ -136,6 +150,7 @@ void comPar(char *dataPack, int *offset)
 				while(*offset < MAX)
 				{
 					mess[n++] = dataPack[(*offset)++];
+					lMess++;
 				}
 			}
 		}
@@ -143,9 +158,22 @@ void comPar(char *dataPack, int *offset)
 	
 	printf("segs>> command: %s | comtag: %s | mess: %s\n", command, comtag, mess);
 	
-	comType = findCom(command);
-	
 	printf("%d\n", comType);
+	
+	for(cdex = 0; cdex < lCom; cdex++)
+		comsec[cdex] = command[cdex];
+	
+	for(mdex = 0; mdex < lMess; mdex++)
+		data[mdex] = mess[mdex];
+	
+	for(tdex = 0; tdex < lTag; tdex++)
+		comTag[tdex] = comtag[tdex];
+	
+	printf("segs>> command: %s | comtag: %s | mess: %s\n", comsec, comTag, data);
+	
+	comType = findCom(comsec);
+	
+	return comType;
 }
 
 int findCom(char *dataSeg)
