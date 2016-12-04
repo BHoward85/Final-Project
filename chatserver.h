@@ -16,6 +16,7 @@
 #define SERVER_SIZE 16 // max number of users
 #define UNAME_MAX 15 // who needs a 15 character uname anyway?
 #define MAX 50 // packet size
+#define MAX_MESS 42 // max message size
 
 typedef struct Client
 {
@@ -26,7 +27,13 @@ typedef struct Client
 } cl;
 // login get username -> give id
 void login(int conn_fd, int max_fd, int id);
+// simple logout
+void logout(char chan, int source, int j);
 // delegate what to do with packet
-void readPacket(char packet[MAX]);
+void readPacket(char packet[MAX], int j);
+// send packet to channel
+void sendPacket(char chan, int source, char data[MAX_MESS], int j);
+// use comPar to figure out what client wants to do and then do it
+void commandPacket(char packet[MAX], int source, int j);
 
 #endif
