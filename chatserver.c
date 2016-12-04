@@ -282,6 +282,7 @@ void sendPacket(char chan, int source, char data[MAX_MESS], int j)
 
 void commandPacket(char packet[MAX], int source, int j)
 {
+	size_t size = sizeof(clientTable) / sizeof(clientTable[0]);
 	char tag[MAX_MESS];
 	char data[MAX_MESS];
 	int comType;
