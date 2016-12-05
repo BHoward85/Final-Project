@@ -1,9 +1,7 @@
-// Final Project
-// Server Code
+// Final Project - CSCD 330
+// Server - Written by Rodney Thomas
 
 #include "chatserver.h"
-#include "packetmanager.h"
-#include "compar.h"
 
 cl clientTable[SERVER_SIZE];
 
@@ -16,8 +14,12 @@ int main(int argc, char **argv)
    } 
 	
    int port = atoi(argv[1]);
-   int conn_fd = 0, listen_fd = 0, max_fd = 0;
-   int i = 0, j = 0, rec = 0;
+   int conn_fd = 0;
+   int listen_fd = 0;
+   int max_fd = 0;
+   int i = 0;
+   int j = 0; 
+   int rec = 0;
    char packet[MAX] = " ";
    struct sockaddr_in serv_addr; 
    struct sockaddr_in cli_addr;
@@ -26,7 +28,11 @@ int main(int argc, char **argv)
    FD_ZERO(&rfd);
    FD_ZERO(&c_rfd);
 	
-	// create socket
+   for(i = 0; i < SERVER_SIZE; i++)
+   {
+      clientTable[i].is_open = 0;
+   }
+    // create socket
    if((listen_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
    {
       fprintf(stderr, "ERROR: Socket Failed!\n");
@@ -55,7 +61,7 @@ int main(int argc, char **argv)
    }
 	
    FD_SET(listen_fd, &rfd);
-	// set max_fd for first time
+   // set max_fd for first time
    max_fd = listen_fd;
 	
    while(1)
@@ -79,13 +85,12 @@ int main(int argc, char **argv)
                   fprintf(stderr, "ERROR: accept() failed!\n");
                   exit(1);
                }
-               printf("[ALERT] - %s connected!\n", inet_ntoa(cli_addr.sin_addr));
                login(conn_fd, max_fd, j);
                FD_SET(conn_fd, &rfd);			   
             	
                for(j = 0; j <= max_fd; j++)
                {			   
-                // set max_fd if needed
+                  // set max_fd if needed
                   if(clientTable[j].id > max_fd && clientTable[j].is_open == 1)
                   {
                      max_fd = clientTable[j].id;
@@ -96,24 +101,35 @@ int main(int argc, char **argv)
             {
                if(FD_ISSET(i, &c_rfd))
                {	
-               	// much easier with recv
                   if((rec = recv(i, packet, sizeof(packet), 0)) <= 0)
                   {
                      if(rec <= 0)
                      {	
-                        printf("[ALERT] - %s disconnected!\n", inet_ntoa(cli_addr.sin_addr));
-                        close(i);
-                        FD_CLR(i, &rfd);
-                        clientTable[i].is_open = 0;
-                        clientTable[i].id = 0;
-                        clientTable[i].channel = 0;
-                        bzero(&clientTable[i].uname, sizeof(clientTable[i].uname));
+                        for(j = 0; j < max_fd; j++)
+                        {
+                           if(i == clientTable[j].id)
+                           {
+                              close(i);
+                              FD_CLR(i, &rfd);
+                              clientTable[j].is_open = 0;
+                              clientTable[j].id = 0;
+                              clientTable[j].channel = 0;
+                              bzero(&clientTable[j].uname, sizeof(clientTable[i].uname));
+                              printf("[ALERT] - %d disconnected!\n", i);
+                           }
+                        }
                      }
                   }
                   else
                   {
                      if(FD_ISSET(i, &c_rfd))
                      {
+                        size_t ln = strlen(packet) -1;
+                        if(packet[ln] == '\n')
+                        {
+                           packet[ln] == '\0';
+                        }
+                        printf("Recieved Packet: %s\n", packet);
                         readPacket(&rfd, packet, max_fd, j);
                      }
                   }
@@ -128,9 +144,9 @@ int main(int argc, char **argv)
 void login(int conn_fd, int max_fd, int j)
 {	
    char packet[MAX] = " ";
-   char data[MAX_MESS] = " "; 	
+   char data[MAX_MESS] = " "; 
+   char chan = 0;   
    int type = 0;
-   char chan = ' ';
    int source = 0;
    int dese = 0;
    int len = 0;
@@ -145,7 +161,6 @@ void login(int conn_fd, int max_fd, int j)
 	
    printf("type : %d | chan : %c | source : %d | dese : %d | mess : %s\n", type, chan, source, dese, data);
 	
-	// find empty spot on clientTable and add
    for(j = 0; j <= max_fd; j++)
    {
       if(clientTable[j].is_open == 0)
@@ -153,21 +168,23 @@ void login(int conn_fd, int max_fd, int j)
          clientTable[j].is_open = 1;
          clientTable[j].id = conn_fd;
          clientTable[j].channel = chan;
-         strcat(clientTable[j].uname, data);
-      	
+         strcat(clientTable[j].uname, data);   	
          len = strlen(clientTable[j].uname);
+       
          if(clientTable[j].uname[len - 1] == '\n')
          {
             clientTable[j].uname[len - 1] = 0;
          }
       	
-      	// send client id back to client
+      	 // send client id back to client
          pack(1, 's', 255, conn_fd, " ", packet);
          printf("Sending packet: %s\n", packet);
          write(conn_fd, packet, 50);
+         printf("Sent to %d\n", clientTable[j].id);
          bzero(packet, 50);
       	
          printf("added %d to clientTable[%d]\n", clientTable[j].id, j);
+         printf("[ALERT] - %d connected!\n", clientTable[j].id);
          break;
       } 
       else
@@ -180,8 +197,8 @@ void login(int conn_fd, int max_fd, int j)
 void readPacket(fd_set *rfd, char packet[MAX], int max_fd, int j)
 {
    char data[MAX_MESS] = " "; 	
+   char chan = 0;
    int type = 0;
-   char chan = ' ';
    int source = 0;
    int dese = 0;	
 	
@@ -190,13 +207,12 @@ void readPacket(fd_set *rfd, char packet[MAX], int max_fd, int j)
    source = unpackSorce(packet);
    dese = unpackDese(packet);
    chan = unpackChan(packet);
-	
-   printf("type : %d | chan : %c | source : %d | dese : %d | mess : %s", type, chan, source, dese, data);
+
+   printf("type : %d | chan : %c | source : %d | dese : %d | mess : %s\n", type, chan, source, dese, data);
 	
    switch(type)
    {
       case 0:
-         printf("send packet\n");
          sendPacket(chan, source, data, max_fd, j);
          break;
    	
@@ -205,12 +221,10 @@ void readPacket(fd_set *rfd, char packet[MAX], int max_fd, int j)
          break;
    	
       case 2:
-         printf("logout packet\n");
          logout((fd_set *)rfd, chan, source, max_fd, j);
          break;
    	
       case 3:
-         printf("command packet\n");
          commandPacket(packet, source, chan, data, max_fd, j);
          break;
    }
@@ -228,17 +242,18 @@ void logout(fd_set *rfd, char chan, int source, int max_fd, int j)
       {	
          strcpy(on_exit, clientTable[j].uname);
          strcat(on_exit, tmp);
-      	
+      	 
          close(clientTable[j].id);
          FD_CLR(clientTable[j].id, &*rfd);
          clientTable[j].is_open = 0;
+         printf("[ALERT] - %d disconnected!\n", clientTable[j].id);
          clientTable[j].id = 0;
          clientTable[j].channel = 0;
          bzero(&clientTable[j].uname, sizeof(clientTable[j].uname));
          break;
       }
    }
-	// broadcast message to others in room
+   
    for(j = 0; j <= max_fd; j++)
    {
       if(clientTable[j].is_open == 1 && clientTable[j].channel == chan)
@@ -246,6 +261,7 @@ void logout(fd_set *rfd, char chan, int source, int max_fd, int j)
          pack(0, chan, 255, clientTable[j].id, on_exit, packet);
          printf("Sending packet: %s\n", packet);
          write(clientTable[j].id, packet, 50);
+         printf("Sent to %d\n", clientTable[j].id);
          bzero(packet, 50);	
       }
    }
@@ -258,21 +274,23 @@ void sendPacket(char chan, int source, char data[MAX_MESS], int max_fd,  int j)
 	
    switch(chan)
    {
-   	// IOS
+   	  // IOS channel
       case 'i':
          for(j = 0; j <= max_fd; j++)
          {
+            printf("j = %d");
             if(clientTable[j].is_open == 1 && clientTable[j].id != source && clientTable[j].channel == 'i')
             {
                pack(0, chan, source, clientTable[j].id, data, packet);
                printf("Sending packet: %s\n", packet);
                write(clientTable[j].id, packet, 50);
+               printf("Sent to %d\n", clientTable[j].id);
                bzero(&packet, 50);
             }
          }
          break;
    	
-   	// Android
+   	  // Android channel
       case 'a':
          for(j = 0; j <= max_fd; j++)
          {
@@ -281,12 +299,13 @@ void sendPacket(char chan, int source, char data[MAX_MESS], int max_fd,  int j)
                pack(0, chan, source, clientTable[j].id, data, packet);
                printf("Sending packet: %s\n", packet);
                write(clientTable[j].id, packet, 50);
+               printf("Sent packet to %d\n", clientTable[j].id);
                bzero(&packet, 50);
             }
          }
          break;
    	
-   	// Global
+   	  // Global channel
       case 'g':
          for(j = 0; j <= max_fd; j++)
          {
@@ -295,11 +314,16 @@ void sendPacket(char chan, int source, char data[MAX_MESS], int max_fd,  int j)
                pack(0, chan, source, clientTable[j].id, data, packet);
                printf("Sending packet: %s\n", packet);
                write(clientTable[j].id, packet, 50);
+               printf("Sent to %d\n", clientTable[j].id);
                bzero(&packet, 50);
             }
          }
          break;
-   	
+     
+      	  // Message to server not implemented
+      case 's':
+         break;
+   	 
       default:
          break;
    }
@@ -309,10 +333,10 @@ void commandPacket(char packet[MAX], int source, char chan, char msg[MAX_MESS], 
 {
    char retPacket[MAX] = " ";
    char who[MAX_MESS] = " ";
-   char tag[MAX_MESS];
-   char data[MAX_MESS];
-   char tmp;
-   int comType;
+   char tag[MAX_MESS] = " ";
+   char data[MAX_MESS] = " ";
+   char tmp = 0;
+   int comType = 0;
    int offset = 0;
    int didFind = 0;
 	
@@ -322,45 +346,49 @@ void commandPacket(char packet[MAX], int source, char chan, char msg[MAX_MESS], 
       comType = comPar(packet, &offset, tag, data);
       offset = 0;
    }
+   
    printf("comType = %d, tag = %s, data = %s\n", comType, tag, data);
 	
    switch(comType)
    {
+     // change room
       case 0:
-      // change room
          for(j = 0; j <= max_fd; j++)
          {
-            if(tmp = tolower(tag[0]) == 'i' && clientTable[j].channel != 'i')
+            if(tmp = tolower(tag[0]) == 'i')
             {
-               if(clientTable[j].is_open == 1 && clientTable[j].id == source)
+               if(clientTable[j].is_open == 1 && clientTable[j].channel != 'i' && clientTable[j].id == source)
                {
                   clientTable[j].channel = 'i';
-                  pack(6, clientTable[j].channel, 255, clientTable[j].id, "Changed room to IOS!", retPacket);
+                  pack(6, clientTable[j].channel, 255, clientTable[j].id, " ", retPacket);
                   printf("Sending packet: %s\n", retPacket);
                   write(clientTable[j].id, retPacket, 50);
+                  printf("Sent packet to %d\n", source);
                   bzero(&retPacket, 50);
                }
             }
-            else if(tmp = tolower(tag[0]) == 'a' && clientTable[j].channel != 'a')
+            else if(tmp = tolower(tag[0]) == 'a')
             {
-               if(clientTable[j].is_open == 1 && clientTable[j].id == source)
+               if(clientTable[j].is_open == 1 && clientTable[j].id == source && clientTable[j].channel != 'a' && clientTable[j].id == source)
                {
                   clientTable[j].channel = 'a';
-                  pack(6, clientTable[j].channel, 255, clientTable[j].id, "Changed room to Android!", retPacket);
+                  pack(6, clientTable[j].channel, 255, clientTable[j].id, " ", retPacket);
                   printf("Sending packet: %s\n", retPacket);
                   write(clientTable[j].id, retPacket, 50);
+                  printf("Sent packet to %d\n", source);
                   bzero(&retPacket, 50);
                   break;
                }
             }
-            else if(tmp = tolower(tag[0]) == 'g' && clientTable[j].channel != 'g')
+            else if(tmp = tolower(tag[0]) == 'g')
             {
-               if(clientTable[j].is_open == 1 && clientTable[j].id == source)
+               if(clientTable[j].is_open == 1 && clientTable[j].channel != 'g' && clientTable[j].id == source)
                {
                   clientTable[j].channel = 'g';
-                  pack(6, clientTable[j].channel, 255, clientTable[j].id, "Changed room to General!", retPacket);
+                  pack(6, clientTable[j].channel, 255, clientTable[j].id, " ", retPacket);
                   printf("Sending packet: %s\n", retPacket);
                   write(clientTable[j].id, retPacket, 50);
+                  printf("Sent packet to %d\n", source);
                   bzero(&retPacket, 50);
                   break;
                }
@@ -369,18 +397,19 @@ void commandPacket(char packet[MAX], int source, char chan, char msg[MAX_MESS], 
             {
                if(clientTable[j].is_open == 1 && clientTable[j].id == source)
                {
-                  pack(7, clientTable[j].channel, 255, clientTable[j].id, "Room Change FAILED!", retPacket);
+                  pack(7, clientTable[j].channel, 255, clientTable[j].id, " ", retPacket);
                   printf("Sending packet: %s\n", retPacket);
                   write(clientTable[j].id, retPacket, 50);
+                  printf("Sent packet to %d\n", source);
                   bzero(&retPacket, 50);
                   break;
                }
             }
          }
          break;
-   	
-      case 1:
+   	 
       // user list
+      case 1:
          for(j = 0; j <= max_fd; j++)
          {
             if(tmp = tolower(tag[0]) == 'i')
@@ -392,6 +421,7 @@ void commandPacket(char packet[MAX], int source, char chan, char msg[MAX_MESS], 
                   printf("Sending packet: %s\n", retPacket);
                   bzero(&who, 44);
                   write(source, retPacket, 50);
+                  printf("Sent packet to %d\n", source);
                   bzero(&retPacket, 50);
                   break;
                }
@@ -405,6 +435,7 @@ void commandPacket(char packet[MAX], int source, char chan, char msg[MAX_MESS], 
                   printf("Sending packet: %s\n", retPacket);
                   bzero(&who, 44);
                   write(source, retPacket, 50);
+                  printf("Sent packet to %d\n", source);
                   bzero(&retPacket, 50);
                   break;
                }
@@ -415,9 +446,10 @@ void commandPacket(char packet[MAX], int source, char chan, char msg[MAX_MESS], 
                {
                   strcat(who, clientTable[j].uname);
                   pack(8, 's', 255, source, who, retPacket);
-                  printf("Sending packet: %s\n", retPacket);
                   bzero(&who, 44);
+                  printf("Sending packet: %s\n", retPacket);
                   write(source, retPacket, 50);
+                  printf("Sent packet to %d\n", source);
                   bzero(&retPacket, 50);
                   break;
                }
@@ -431,26 +463,34 @@ void commandPacket(char packet[MAX], int source, char chan, char msg[MAX_MESS], 
                   printf("Sending packet: %s\n", retPacket);
                   bzero(&who, 44);
                   write(source, retPacket, 50);
+                  printf("Sent packet to %d\n", source);
                   bzero(&retPacket, 50);
                   break;
                }
             }
          }
+       
          pack(9, 's', 255, source, " ", retPacket);
          printf("Sending packet: %s\n", retPacket);
          write(source, retPacket, 50);
+         printf("Sent packet to %d\n", source);
          bzero(&retPacket, 50);
          break;
-   	
-      case 2:
-      // private message	
+      
+      // private message	  
+      case 2:	
          for(j = 0; j <= max_fd; j++)
          {
             if(strcmp(clientTable[j].uname, tag) == 0 && clientTable[j].is_open == 1)
             {
-               pack(4, 's', source, clientTable[j].id, data, retPacket);
-               printf("Sending packet: %s\n", retPacket);
+               pack(4, 's', 255, source, " ", retPacket);
                write(source, retPacket, 50);
+               printf("Sending packet: %s\n", retPacket);
+               bzero(&retPacket, 50);
+               pack(0, 's', clientTable[j].id, source, data, retPacket);
+               printf("Sending packet: %s\n", retPacket);
+               write(clientTable[j].id, retPacket, 50);
+               printf("Sent packet to %d\n", source);
                bzero(&retPacket, 50);
                didFind = 1;
                break;
@@ -466,6 +506,7 @@ void commandPacket(char packet[MAX], int source, char chan, char msg[MAX_MESS], 
             pack(5, 's', 255, source, " ", retPacket);
             printf("Sending packet: %s\n", retPacket);
             write(source, retPacket, 50);
+            printf("Sent packet to %d\n", source);
             bzero(&retPacket, 50); 
          }
          break;
