@@ -105,31 +105,31 @@ int main(int argc, char **argv)
                   {
                      if(rec <= 0)
                      {	
-                        for(j = 0; j < max_fd; j++)
-                        {
-                           if(i == clientTable[j].id)
-                           {
+			for(j = 0; j < max_fd; j++)
+			{
+			   if(i == clientTable[j].id)
+			   {
                               close(i);
                               FD_CLR(i, &rfd);
                               clientTable[j].is_open = 0;
                               clientTable[j].id = 0;
                               clientTable[j].channel = 0;
                               bzero(&clientTable[j].uname, sizeof(clientTable[i].uname));
-                              printf("[ALERT] - %d disconnected!\n", i);
-                           }
-                        }
+		 	      printf("[ALERT] - %d disconnected!\n", i);
+			   }
+		 	}
                      }
                   }
                   else
                   {
                      if(FD_ISSET(i, &c_rfd))
                      {
-                        size_t ln = strlen(packet) -1;
-                        if(packet[ln] == '\n')
-                        {
-                           packet[ln] == '\0';
-                        }
-                        printf("Recieved Packet: %s\n", packet);
+			size_t ln = strlen(packet) -1;
+			if(packet[ln] == '\n')
+			{
+			   packet[ln] == '\0';
+			}
+			printf("Recieved Packet: %s\n", packet);
                         readPacket(&rfd, packet, max_fd, j);
                      }
                   }
@@ -170,7 +170,7 @@ void login(int conn_fd, int max_fd, int j)
          clientTable[j].channel = chan;
          strcat(clientTable[j].uname, data);   	
          len = strlen(clientTable[j].uname);
-       
+		 
          if(clientTable[j].uname[len - 1] == '\n')
          {
             clientTable[j].uname[len - 1] = 0;
@@ -178,13 +178,13 @@ void login(int conn_fd, int max_fd, int j)
       	
       	 // send client id back to client
          pack(1, 's', 255, conn_fd, " ", packet);
-         printf("Sending packet: %s\n", packet);
+	 printf("Sending packet: %s\n", packet);
          write(conn_fd, packet, 50);
-         printf("Sent to %d\n", clientTable[j].id);
+	 printf("Sent to %d\n", clientTable[j].id);
          bzero(packet, 50);
       	
          printf("added %d to clientTable[%d]\n", clientTable[j].id, j);
-         printf("[ALERT] - %d connected!\n", clientTable[j].id);
+	 printf("[ALERT] - %d connected!\n", clientTable[j].id);
          break;
       } 
       else
@@ -246,7 +246,7 @@ void logout(fd_set *rfd, char chan, int source, int max_fd, int j)
          close(clientTable[j].id);
          FD_CLR(clientTable[j].id, &*rfd);
          clientTable[j].is_open = 0;
-         printf("[ALERT] - %d disconnected!\n", clientTable[j].id);
+	 printf("[ALERT] - %d disconnected!\n", clientTable[j].id);
          clientTable[j].id = 0;
          clientTable[j].channel = 0;
          bzero(&clientTable[j].uname, sizeof(clientTable[j].uname));
@@ -259,9 +259,9 @@ void logout(fd_set *rfd, char chan, int source, int max_fd, int j)
       if(clientTable[j].is_open == 1 && clientTable[j].channel == chan)
       {
          pack(0, chan, 255, clientTable[j].id, on_exit, packet);
-         printf("Sending packet: %s\n", packet);
+	 printf("Sending packet: %s\n", packet);
          write(clientTable[j].id, packet, 50);
-         printf("Sent to %d\n", clientTable[j].id);
+	 printf("Sent to %d\n", clientTable[j].id);
          bzero(packet, 50);	
       }
    }
@@ -278,13 +278,13 @@ void sendPacket(char chan, int source, char data[MAX_MESS], int max_fd,  int j)
       case 'i':
          for(j = 0; j <= max_fd; j++)
          {
-            printf("j = %d");
+			printf("j = %d");
             if(clientTable[j].is_open == 1 && clientTable[j].id != source && clientTable[j].channel == 'i')
             {
                pack(0, chan, source, clientTable[j].id, data, packet);
-               printf("Sending packet: %s\n", packet);
+	       printf("Sending packet: %s\n", packet);
                write(clientTable[j].id, packet, 50);
-               printf("Sent to %d\n", clientTable[j].id);
+	       printf("Sent to %d\n", clientTable[j].id);
                bzero(&packet, 50);
             }
          }
@@ -297,9 +297,9 @@ void sendPacket(char chan, int source, char data[MAX_MESS], int max_fd,  int j)
             if(clientTable[j].is_open == 1 && clientTable[j].id != source && clientTable[j].channel == 'a')
             {
                pack(0, chan, source, clientTable[j].id, data, packet);
-               printf("Sending packet: %s\n", packet);
+	       printf("Sending packet: %s\n", packet);
                write(clientTable[j].id, packet, 50);
-               printf("Sent packet to %d\n", clientTable[j].id);
+	       printf("Sent packet to %d\n", clientTable[j].id);
                bzero(&packet, 50);
             }
          }
@@ -309,21 +309,21 @@ void sendPacket(char chan, int source, char data[MAX_MESS], int max_fd,  int j)
       case 'g':
          for(j = 0; j <= max_fd; j++)
          {
-            if(clientTable[j].is_open == 1 && clientTable[j].id != source && clientTable[j].channel == 'g')
+            if(clientTable[j].is_open == 1 && clientTable[j].id != source /*&& clientTable[j].channel == 'g'*/)
             {
                pack(0, chan, source, clientTable[j].id, data, packet);
-               printf("Sending packet: %s\n", packet);
+	       printf("Sending packet: %s\n", packet);
                write(clientTable[j].id, packet, 50);
                printf("Sent to %d\n", clientTable[j].id);
                bzero(&packet, 50);
             }
          }
          break;
-     
+	  
       	  // Message to server not implemented
       case 's':
-         break;
-   	 
+	 break;
+		 
       default:
          break;
    }
@@ -351,7 +351,7 @@ void commandPacket(char packet[MAX], int source, char chan, char msg[MAX_MESS], 
 	
    switch(comType)
    {
-     // change room
+	  // change room
       case 0:
          for(j = 0; j <= max_fd; j++)
          {
@@ -361,9 +361,9 @@ void commandPacket(char packet[MAX], int source, char chan, char msg[MAX_MESS], 
                {
                   clientTable[j].channel = 'i';
                   pack(6, clientTable[j].channel, 255, clientTable[j].id, " ", retPacket);
-                  printf("Sending packet: %s\n", retPacket);
+		  printf("Sending packet: %s\n", retPacket);
                   write(clientTable[j].id, retPacket, 50);
-                  printf("Sent packet to %d\n", source);
+		  printf("Sent packet to %d\n", source);
                   bzero(&retPacket, 50);
                }
             }
@@ -373,9 +373,9 @@ void commandPacket(char packet[MAX], int source, char chan, char msg[MAX_MESS], 
                {
                   clientTable[j].channel = 'a';
                   pack(6, clientTable[j].channel, 255, clientTable[j].id, " ", retPacket);
-                  printf("Sending packet: %s\n", retPacket);
+		  printf("Sending packet: %s\n", retPacket);
                   write(clientTable[j].id, retPacket, 50);
-                  printf("Sent packet to %d\n", source);
+		  printf("Sent packet to %d\n", source);
                   bzero(&retPacket, 50);
                   break;
                }
@@ -386,9 +386,9 @@ void commandPacket(char packet[MAX], int source, char chan, char msg[MAX_MESS], 
                {
                   clientTable[j].channel = 'g';
                   pack(6, clientTable[j].channel, 255, clientTable[j].id, " ", retPacket);
-                  printf("Sending packet: %s\n", retPacket);
+		  printf("Sending packet: %s\n", retPacket);
                   write(clientTable[j].id, retPacket, 50);
-                  printf("Sent packet to %d\n", source);
+		  printf("Sent packet to %d\n", source);
                   bzero(&retPacket, 50);
                   break;
                }
@@ -398,117 +398,131 @@ void commandPacket(char packet[MAX], int source, char chan, char msg[MAX_MESS], 
                if(clientTable[j].is_open == 1 && clientTable[j].id == source)
                {
                   pack(7, clientTable[j].channel, 255, clientTable[j].id, " ", retPacket);
-                  printf("Sending packet: %s\n", retPacket);
+		  printf("Sending packet: %s\n", retPacket);
                   write(clientTable[j].id, retPacket, 50);
-                  printf("Sent packet to %d\n", source);
+		  printf("Sent packet to %d\n", source);
                   bzero(&retPacket, 50);
                   break;
                }
             }
          }
          break;
-   	 
+		 
       // user list
       case 1:
+	 tmp = tolower(tag[0]);
          for(j = 0; j <= max_fd; j++)
          {
-            if(tmp = tolower(tag[0]) == 'i')
+            if(tmp == 'i')
             {
-               if(clientTable[j].is_open == 1 && clientTable[j].id != source && clientTable[j].is_open == 1)
+               if(clientTable[j].is_open == 1 && clientTable[j].id != source && clientTable[j].channel == tmp)
                {
                   strcat(who, clientTable[j].uname);
                   pack(8, 's', 255, source, who, retPacket);
-                  printf("Sending packet: %s\n", retPacket);
+		  printf("Sending packet: %s\n", retPacket);
                   bzero(&who, 44);
                   write(source, retPacket, 50);
-                  printf("Sent packet to %d\n", source);
+		  printf("Sent packet to %d\n", source);
                   bzero(&retPacket, 50);
-                  break;
+                  //break;
                }
             }
-            else if(tmp = tolower(tag[0]) == 'a')
+            else if(tmp == 'a')
             {
-               if(clientTable[j].is_open == 1 && clientTable[j].id != source && clientTable[j].is_open == 1)
+               if(clientTable[j].is_open == 1 && clientTable[j].id != source && clientTable[j].channel == tmp)
                {
                   strcat(who, clientTable[j].uname);
                   pack(8, 's', 255, source, who, retPacket);
-                  printf("Sending packet: %s\n", retPacket);
+		  printf("Sending packet: %s\n", retPacket);
                   bzero(&who, 44);
                   write(source, retPacket, 50);
-                  printf("Sent packet to %d\n", source);
+		  printf("Sent packet to %d\n", source);
                   bzero(&retPacket, 50);
-                  break;
+                  //break;
                }
             }
-            else if(tmp = tolower(tag[0]) == 'g')
+            else if(tmp == 'g')
             {
-               if(clientTable[j].is_open == 1 && clientTable[j].id != source && clientTable[j].is_open == 1)
+               if(clientTable[j].is_open == 1 && clientTable[j].id != source && clientTable[j].channel == tmp)
                {
                   strcat(who, clientTable[j].uname);
                   pack(8, 's', 255, source, who, retPacket);
-                  bzero(&who, 44);
-                  printf("Sending packet: %s\n", retPacket);
+		  bzero(&who, 44);
+		  printf("Sending packet: %s\n", retPacket);
                   write(source, retPacket, 50);
-                  printf("Sent packet to %d\n", source);
+		  printf("Sent packet to %d\n", source);
                   bzero(&retPacket, 50);
-                  break;
+                  //break;
                }
             }
-            else
+            else if(tmp == ' ')
             {
-               if(clientTable[j].is_open == 1 && clientTable[j].id != source && clientTable[j].channel == chan)
+               if(clientTable[j].is_open == 1 && clientTable[j].id != source)
                {
                   strcat(who, clientTable[j].uname);
                   pack(8, 's', 255, source, who, retPacket);
-                  printf("Sending packet: %s\n", retPacket);
+		  printf("Sending packet: %s\n", retPacket);
                   bzero(&who, 44);
                   write(source, retPacket, 50);
-                  printf("Sent packet to %d\n", source);
+		  printf("Sent packet to %d\n", source);
                   bzero(&retPacket, 50);
-                  break;
+                  //break;
                }
             }
          }
-       
+		 
          pack(9, 's', 255, source, " ", retPacket);
-         printf("Sending packet: %s\n", retPacket);
+	 printf("Sending packet: %s\n", retPacket);
          write(source, retPacket, 50);
-         printf("Sent packet to %d\n", source);
+	 printf("Sent packet to %d\n", source);
          bzero(&retPacket, 50);
          break;
       
       // private message	  
       case 2:	
-         for(j = 0; j <= max_fd; j++)
-         {
-            if(strcmp(clientTable[j].uname, tag) == 0 && clientTable[j].is_open == 1)
-            {
-               pack(4, 's', 255, source, " ", retPacket);
-               write(source, retPacket, 50);
-               printf("Sending packet: %s\n", retPacket);
-               bzero(&retPacket, 50);
-               pack(0, 's', clientTable[j].id, source, data, retPacket);
-               printf("Sending packet: %s\n", retPacket);
-               write(clientTable[j].id, retPacket, 50);
-               printf("Sent packet to %d\n", source);
-               bzero(&retPacket, 50);
-               didFind = 1;
-               break;
-            }
-         }
-       
-         if(didFind == 1)
-         {
-            didFind = 0;
-         }
-         else
-         {
-            pack(5, 's', 255, source, " ", retPacket);
-            printf("Sending packet: %s\n", retPacket);
-            write(source, retPacket, 50);
-            printf("Sent packet to %d\n", source);
-            bzero(&retPacket, 50); 
-         }
+	     for(j = 0; j <= max_fd; j++)
+	     {
+		    if(strcmp(clientTable[j].uname, tag) == 0 && clientTable[j].is_open == 1)
+            	    {
+                                pack(4, 's', 255, source, " ", retPacket);
+				write(source, retPacket, 50);
+				printf("Sending packet: %s\n", retPacket);
+				bzero(&retPacket, 50);
+				pack(0, 's', clientTable[j].id, source, data, retPacket);
+				printf("Sending packet: %s\n", retPacket);
+				write(clientTable[j].id, retPacket, 50);
+				printf("Sent packet to %d\n", source);
+				bzero(&retPacket, 50);
+				didFind = 1;
+				break;
+			}
+			else if(strcmp("all", tag) == 0 && clientTable[j].is_open == 1)
+			{
+				pack(4, 's', 255, source, " ", retPacket);
+				write(source, retPacket, 50);
+				printf("Sending packet: %s\n", retPacket);
+				bzero(&retPacket, 50);
+				pack(0, 's', clientTable[j].id, source, data, retPacket);
+				printf("Sending packet: %s\n", retPacket);
+				write(clientTable[j].id, retPacket, 50);
+				printf("Sent packet to %d\n", source);
+				bzero(&retPacket, 50);
+				didFind = 1;
+			} 
+	     }
+		 
+		 if(didFind == 1)
+		 {
+			 didFind = 0;
+		 }
+		 else
+		 {
+			pack(5, 's', 255, source, " ", retPacket);
+			printf("Sending packet: %s\n", retPacket);
+			write(source, retPacket, 50);
+			printf("Sent packet to %d\n", source);
+			bzero(&retPacket, 50); 
+		 }
          break;
    	
       default:

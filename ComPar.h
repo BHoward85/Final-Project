@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define TRUE 1
+#define TRUE 1x
 #define FALSE 0
 
 int comPar(char *dataPack, int *offset, char* comTag, char* data);

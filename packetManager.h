@@ -4,7 +4,7 @@
 #ifndef PACKETMANAGER_H
 #define PACKETMANAGER_H
 
-#include "ComPar.h"
+//#include "ComPar.h"
 
 #define MAX 50
 #define MAX_MESS 42

@@ -27,11 +27,11 @@
  **		i.e. $pm <tim> : hello
  **/
 
-#include "ComPar.h"
+#include "compar.h"
 
 #define MAX 50
 #define MAX_MESS 42
-
+/*
 int main()
 {
 	char tag[MAX_MESS] = " ";
@@ -68,13 +68,14 @@ int main()
 		offset += 8;
 		comPar(forth, &offset);
 		offset = 0;
-	}*/
+	}
 	offset = 0;
 	//comPar(fifth, &offset);
 	
 	printf("comType = %d, tag = %s, data = %s\n", comType, tag, data);
 	return 0;
 }
+*/
 
 int comPar(char *dataPack, int *offset, char* comTag, char* data)
 {
@@ -96,7 +97,7 @@ int comPar(char *dataPack, int *offset, char* comTag, char* data)
 	//bzero(comtag, MAX - (*offset));
 	//bzero(mess, MAX - (*offset));
 	
-	printf("dataPack: %s\n%d\n%d\n", dataPack, *offset, (MAX - (*offset)));
+	//printf("dataPack: %s\n%d\n%d\n", dataPack, *offset, (MAX - (*offset)));
 	
 	while(*offset < MAX)
 	{
@@ -110,19 +111,19 @@ int comPar(char *dataPack, int *offset, char* comTag, char* data)
 				
 				if(tempChar != ' ' && tempChar != '\n' && tempChar != '<' && *offset < MAX)
 				{
-					printf("%c", tempChar);
+					//printf("%c", tempChar);
 					command[n++] = tempChar;
 					lCom++;
 				}
 			}
-			printf("\n");
-			printf("tempChar: %c\ncommand: %s\nn = %d\n", tempChar, command, n);
+			//printf("\n");
+			//printf("tempChar: %c\ncommand: %s\nn = %d\n", tempChar, command, n);
 			n = 0;
 			while(tempChar != '<' && tempChar != '\n' && *offset < MAX)
 			{
 				tempChar = dataPack[(*offset)++];
 			}
-			printf("\n");
+			//printf("\n");
 			if(tempChar == '<')
 			{
 				while(tempChar != '>' && *offset < MAX)
@@ -131,20 +132,20 @@ int comPar(char *dataPack, int *offset, char* comTag, char* data)
 					
 					if(tempChar != '>')
 					{
-						printf("%c", tempChar);
+						//printf("%c", tempChar);
 						comtag[n++] = tempChar;
 						lTag++;
 					}
 				}
 			
-				printf("\n");
-				printf("tempChar: %c\ncomTag %s\nn = %d\n", tempChar, comtag, n);
+				//printf("\n");
+				//printf("tempChar: %c\ncomTag %s\nn = %d\n", tempChar, comtag, n);
 				n = 0;
 				while(tempChar != ':' && tempChar != '\n' && *offset < MAX)
 				{
 					tempChar = dataPack[(*offset)++];
 				}
-				printf("\n");
+				//printf("\n");
 				n = 0;
 				if(tempChar == ':')
 				{
@@ -158,9 +159,9 @@ int comPar(char *dataPack, int *offset, char* comTag, char* data)
 		}
 	}
 	
-	printf("segs>> command: %s | comtag: %s | mess: %s\n", command, comtag, mess);
+	//printf("segs>> command: %s | comtag: %s | mess: %s\n", command, comtag, mess);
 	
-	printf("%d\n", comType);
+	//printf("%d\n", comType);
 	
 	for(cdex = 0; cdex < lCom; cdex++)
 		comsec[cdex] = command[cdex];
@@ -171,7 +172,7 @@ int comPar(char *dataPack, int *offset, char* comTag, char* data)
 	for(tdex = 0; tdex < lTag; tdex++)
 		comTag[tdex] = comtag[tdex];
 	
-	printf("segs>> command: %s | comtag: %s | mess: %s\n", comsec, comTag, data);
+	//printf("segs>> command: %s | comtag: %s | mess: %s\n", comsec, comTag, data);
 	
 	comType = findCom(comsec);
 	

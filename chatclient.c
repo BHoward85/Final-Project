@@ -36,14 +36,14 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 	
-	login(sockfd, userName);
-	while(TRUE)
-	{	
-		pthread_create(&t1, 0, &reader, (void *) &sockfd);
-		pthread_create(&t2, 0, &writer, (void *) &sockfd);
-		pthread_detach(t1);
-		pthread_detach(t2);
+	login(sockfd, userName);	
+	pthread_create(&t1, 0, &reader, (void *) &sockfd);
+	pthread_create(&t2, 0, &writer, (void *) &sockfd);
+	pthread_detach(t1);
+	pthread_detach(t2);
 
+	while(TRUE)
+	{
 		if(trip == 0)
 			break;
 	}
@@ -124,19 +124,25 @@ void * reader(void * sockfd)
 		switch(unpackType(buff))
 		{
 			case 3:
-					room = unpackChan(buff);
-					printf("-->channel changed to: %s%c\n", buff, unpackChan(buff));
-					break;
+				room = unpackChan(buff);
+				printf("-->channel changed to: %s%c\n", buff, unpackChan(buff));
+				break;
 			case 4:
 				unpackMess(buff, packet);
 				printf("-->PM sent: %s\n", buff);
 				break;
 			case 5:
+				unpackMess(buff, packet);
+				printf("-->PM fail: %s\n", buff);
+				break;
 			case 6:
 				room = unpackChan(buff);
 				printf("-->channel changed to: %s: %c\n", buff, unpackChan(buff));
 				break;
 			case 7:
+				unpackMess(buff, packet);
+				printf("-->channel changed fail: %s\n", buff);
+				break;
 			case 8:
 				unpackMess(packet, buff);
 				printf("->%s\n", packet);
@@ -148,6 +154,11 @@ void * reader(void * sockfd)
 				printf("-->%s", buff);
 				break;
 		}//end of switch
+		if(n == 0)
+		{
+			trip = 0;
+			pthread_exit(NULL);
+		}
 		bzero(buff, BUFF_SIZE);
 	}
 }

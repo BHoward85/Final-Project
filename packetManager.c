@@ -97,11 +97,10 @@ char unpackChan(char* packet)
 int unpackSorce(char* packet)
 {
 	int n = 0;
-	int ndex = 0;
 	int offset = 2;
 	char subSet[3];
 	
-	for(ndex = 0; ndex < 3; ndex++)
+	for(int ndex = 0; ndex < 3; ndex++)
 		subSet[ndex] = packet[offset + ndex];
 		
 	charToInt(subSet, &n);
@@ -112,11 +111,10 @@ int unpackSorce(char* packet)
 int unpackDese(char* packet)
 {
 	int n = 0;
-	int ndex =0;
 	int offset = 5;
 	char subSet[3];
 	
-	for(ndex = 0; ndex < 3; ndex++)
+	for(int ndex = 0; ndex < 3; ndex++)
 		subSet[ndex] = packet[offset + ndex];
 	
 	charToInt(subSet, &n);
