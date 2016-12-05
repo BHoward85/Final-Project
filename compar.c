@@ -34,10 +34,11 @@
 
 int main()
 {
-	char tag[MAX_MESS];
-	char data[MAX_MESS];
+	char tag[MAX_MESS] = " ";
+	char data[MAX_MESS] = " ";
 	int comType;
-	char first[MAX] = "3s001255$pm <tim> : how are you?\n";
+	char first[MAX] = "3g004255$ul\n";
+	//char first[MAX] = "3s001255$pm <tim> : how are you?\n";
 	//char second[MAX] = "3s002255$ch <iOS>: \n";
 	//char third[MAX] = "3g008255$ul<all>:\n";
 	//char forth[MAX] = "3g004255$ch<And>\n";
@@ -103,11 +104,11 @@ int comPar(char *dataPack, int *offset, char* comTag, char* data)
 		
 		if(tempChar == '$')
 		{
-			while(tempChar != ' ' && tempChar != '<')
+			while(tempChar != ' ' && tempChar != '\n' && tempChar != '<' && *offset < MAX)
 			{
 				tempChar = dataPack[(*offset)++];
 				
-				if(tempChar != ' ' && tempChar != '<')
+				if(tempChar != ' ' && tempChar != '\n' && tempChar != '<' && *offset < MAX)
 				{
 					printf("%c", tempChar);
 					command[n++] = tempChar;
@@ -117,14 +118,14 @@ int comPar(char *dataPack, int *offset, char* comTag, char* data)
 			printf("\n");
 			printf("tempChar: %c\ncommand: %s\nn = %d\n", tempChar, command, n);
 			n = 0;
-			while(tempChar != '<')
+			while(tempChar != '<' && tempChar != '\n' && *offset < MAX)
 			{
 				tempChar = dataPack[(*offset)++];
 			}
 			printf("\n");
 			if(tempChar == '<')
 			{
-				while(tempChar != '>')
+				while(tempChar != '>' && *offset < MAX)
 				{
 					tempChar = dataPack[(*offset)++];
 					
@@ -135,22 +136,23 @@ int comPar(char *dataPack, int *offset, char* comTag, char* data)
 						lTag++;
 					}
 				}
-			}
-			printf("\n");
-			printf("tempChar: %c\ncomTag %s\nn = %d\n", tempChar, comtag, n);
-			n = 0;
-			while(tempChar != ':' && *offset < MAX)
-			{
-				tempChar = dataPack[(*offset)++];
-			}
-			printf("\n");
-			n = 0;
-			if(tempChar == ':')
-			{
-				while(*offset < MAX)
+			
+				printf("\n");
+				printf("tempChar: %c\ncomTag %s\nn = %d\n", tempChar, comtag, n);
+				n = 0;
+				while(tempChar != ':' && tempChar != '\n' && *offset < MAX)
 				{
-					mess[n++] = dataPack[(*offset)++];
-					lMess++;
+					tempChar = dataPack[(*offset)++];
+				}
+				printf("\n");
+				n = 0;
+				if(tempChar == ':')
+				{
+					while(*offset < MAX)
+					{
+						mess[n++] = dataPack[(*offset)++];
+						lMess++;
+					}
 				}
 			}
 		}
