@@ -163,7 +163,7 @@ void login(int conn_fd, int max_fd, int j)
       	
       	// send client id back to client
          pack(1, 's', 255, conn_fd, " ", packet);
-		 printf("Sending packet: %s\n", packet);
+         printf("Sending packet: %s\n", packet);
          write(conn_fd, packet, 50);
          bzero(packet, 50);
       	
@@ -211,7 +211,7 @@ void readPacket(fd_set *rfd, char packet[MAX], int max_fd, int j)
    	
       case 3:
          printf("command packet\n");
-         commandPacket(packet, source, chan, max_fd, j);
+         commandPacket(packet, source, chan, data, max_fd, j);
          break;
    }
 }
@@ -224,7 +224,7 @@ void logout(fd_set *rfd, char chan, int source, int max_fd, int j)
 	
    for(j = 0; j <= max_fd; j++)
    {
-      if(clientTable[j].id == source)
+      if(clientTable[j].is_open == 1 && clientTable[j].id == source)
       {	
          strcpy(on_exit, clientTable[j].uname);
          strcat(on_exit, tmp);
@@ -241,10 +241,10 @@ void logout(fd_set *rfd, char chan, int source, int max_fd, int j)
 	// broadcast message to others in room
    for(j = 0; j <= max_fd; j++)
    {
-      if(clientTable[j].channel == chan)
+      if(clientTable[j].is_open == 1 && clientTable[j].channel == chan)
       {
          pack(0, chan, 255, clientTable[j].id, on_exit, packet);
-		 printf("Sending packet: %s\n", packet);
+         printf("Sending packet: %s\n", packet);
          write(clientTable[j].id, packet, 50);
          bzero(packet, 50);	
       }
@@ -262,10 +262,10 @@ void sendPacket(char chan, int source, char data[MAX_MESS], int max_fd,  int j)
       case 'i':
          for(j = 0; j <= max_fd; j++)
          {
-            if(clientTable[j].id != source && clientTable[j].channel == 'i')
+            if(clientTable[j].is_open == 1 && clientTable[j].id != source && clientTable[j].channel == 'i')
             {
                pack(0, chan, source, clientTable[j].id, data, packet);
-			   printf("Sending packet: %s\n", packet);
+               printf("Sending packet: %s\n", packet);
                write(clientTable[j].id, packet, 50);
                bzero(&packet, 50);
             }
@@ -276,10 +276,10 @@ void sendPacket(char chan, int source, char data[MAX_MESS], int max_fd,  int j)
       case 'a':
          for(j = 0; j <= max_fd; j++)
          {
-            if(clientTable[j].id != source && clientTable[j].channel == 'a')
+            if(clientTable[j].is_open == 1 && clientTable[j].id != source && clientTable[j].channel == 'a')
             {
                pack(0, chan, source, clientTable[j].id, data, packet);
-			   printf("Sending packet: %s\n", packet);
+               printf("Sending packet: %s\n", packet);
                write(clientTable[j].id, packet, 50);
                bzero(&packet, 50);
             }
@@ -290,10 +290,10 @@ void sendPacket(char chan, int source, char data[MAX_MESS], int max_fd,  int j)
       case 'g':
          for(j = 0; j <= max_fd; j++)
          {
-            if(clientTable[j].id != source && clientTable[j].channel == 'g')
+            if(clientTable[j].is_open == 1 && clientTable[j].id != source && clientTable[j].channel == 'g')
             {
                pack(0, chan, source, clientTable[j].id, data, packet);
-			   printf("Sending packet: %s\n", packet);
+               printf("Sending packet: %s\n", packet);
                write(clientTable[j].id, packet, 50);
                bzero(&packet, 50);
             }
@@ -305,7 +305,7 @@ void sendPacket(char chan, int source, char data[MAX_MESS], int max_fd,  int j)
    }
 }
 
-void commandPacket(char packet[MAX], int source, char chan, int max_fd, int j)
+void commandPacket(char packet[MAX], int source, char chan, char msg[MAX_MESS], int max_fd, int j)
 {
    char retPacket[MAX] = " ";
    char who[MAX_MESS] = " ";
@@ -314,6 +314,7 @@ void commandPacket(char packet[MAX], int source, char chan, int max_fd, int j)
    char tmp;
    int comType;
    int offset = 0;
+   int didFind = 0;
 	
    if(packet[offset] == '3')
    {
@@ -321,7 +322,6 @@ void commandPacket(char packet[MAX], int source, char chan, int max_fd, int j)
       comType = comPar(packet, &offset, tag, data);
       offset = 0;
    }
-   bzero(&packet, 50);
    printf("comType = %d, tag = %s, data = %s\n", comType, tag, data);
 	
    switch(comType)
@@ -332,55 +332,47 @@ void commandPacket(char packet[MAX], int source, char chan, int max_fd, int j)
          {
             if(tmp = tolower(tag[0]) == 'i' && clientTable[j].channel != 'i')
             {
-               if(clientTable[j].id == source)
+               if(clientTable[j].is_open == 1 && clientTable[j].id == source)
                {
                   clientTable[j].channel = 'i';
-                  printf("%d changed room to %c\n", clientTable[j].id, clientTable[j].channel);
                   pack(6, clientTable[j].channel, 255, clientTable[j].id, "Changed room to IOS!", retPacket);
-				  printf("Sending packet: %s\n", retPacket);
+                  printf("Sending packet: %s\n", retPacket);
                   write(clientTable[j].id, retPacket, 50);
                   bzero(&retPacket, 50);
-                  printf("Changed room packet sent to %d\n", clientTable[j].id);
-                  break;
                }
             }
             else if(tmp = tolower(tag[0]) == 'a' && clientTable[j].channel != 'a')
             {
-               if(clientTable[j].id == source)
+               if(clientTable[j].is_open == 1 && clientTable[j].id == source)
                {
                   clientTable[j].channel = 'a';
-                  printf("%d changed room to %c\n", clientTable[j].id, clientTable[j].channel);
                   pack(6, clientTable[j].channel, 255, clientTable[j].id, "Changed room to Android!", retPacket);
-				  printf("Sending packet: %s\n", retPacket);
+                  printf("Sending packet: %s\n", retPacket);
                   write(clientTable[j].id, retPacket, 50);
                   bzero(&retPacket, 50);
-                  printf("Changed room packet sent to %d\n", clientTable[j].id);
                   break;
                }
             }
             else if(tmp = tolower(tag[0]) == 'g' && clientTable[j].channel != 'g')
             {
-               if(clientTable[j].id == source)
+               if(clientTable[j].is_open == 1 && clientTable[j].id == source)
                {
                   clientTable[j].channel = 'g';
-                  printf("%d changed room to %c\n", clientTable[j].id, clientTable[j].channel);
                   pack(6, clientTable[j].channel, 255, clientTable[j].id, "Changed room to General!", retPacket);
-				  printf("Sending packet: %s\n", retPacket);
+                  printf("Sending packet: %s\n", retPacket);
                   write(clientTable[j].id, retPacket, 50);
                   bzero(&retPacket, 50);
-                  printf("Changed room packet sent to %d\n", clientTable[j].id);
                   break;
                }
             }
             else
             {
-               if(clientTable[j].id == source)
+               if(clientTable[j].is_open == 1 && clientTable[j].id == source)
                {
                   pack(7, clientTable[j].channel, 255, clientTable[j].id, "Room Change FAILED!", retPacket);
-				  printf("Sending packet: %s\n", retPacket);
+                  printf("Sending packet: %s\n", retPacket);
                   write(clientTable[j].id, retPacket, 50);
                   bzero(&retPacket, 50);
-                  printf("Changed room packet sent to %d\n", clientTable[j].id);
                   break;
                }
             }
@@ -393,11 +385,11 @@ void commandPacket(char packet[MAX], int source, char chan, int max_fd, int j)
          {
             if(tmp = tolower(tag[0]) == 'i')
             {
-               if(clientTable[j].id != source && clientTable[j].is_open == 1)
+               if(clientTable[j].is_open == 1 && clientTable[j].id != source && clientTable[j].is_open == 1)
                {
                   strcat(who, clientTable[j].uname);
                   pack(8, 's', 255, source, who, retPacket);
-				  printf("Sending packet: %s\n", retPacket);
+                  printf("Sending packet: %s\n", retPacket);
                   bzero(&who, 44);
                   write(source, retPacket, 50);
                   bzero(&retPacket, 50);
@@ -406,11 +398,11 @@ void commandPacket(char packet[MAX], int source, char chan, int max_fd, int j)
             }
             else if(tmp = tolower(tag[0]) == 'a')
             {
-               if(clientTable[j].id != source && clientTable[j].is_open == 1)
+               if(clientTable[j].is_open == 1 && clientTable[j].id != source && clientTable[j].is_open == 1)
                {
                   strcat(who, clientTable[j].uname);
                   pack(8, 's', 255, source, who, retPacket);
-				  printf("Sending packet: %s\n", retPacket);
+                  printf("Sending packet: %s\n", retPacket);
                   bzero(&who, 44);
                   write(source, retPacket, 50);
                   bzero(&retPacket, 50);
@@ -419,11 +411,11 @@ void commandPacket(char packet[MAX], int source, char chan, int max_fd, int j)
             }
             else if(tmp = tolower(tag[0]) == 'g')
             {
-               if(clientTable[j].id != source && clientTable[j].is_open == 1)
+               if(clientTable[j].is_open == 1 && clientTable[j].id != source && clientTable[j].is_open == 1)
                {
                   strcat(who, clientTable[j].uname);
                   pack(8, 's', 255, source, who, retPacket);
-				  printf("Sending packet: %s\n", retPacket);
+                  printf("Sending packet: %s\n", retPacket);
                   bzero(&who, 44);
                   write(source, retPacket, 50);
                   bzero(&retPacket, 50);
@@ -432,11 +424,11 @@ void commandPacket(char packet[MAX], int source, char chan, int max_fd, int j)
             }
             else
             {
-               if(clientTable[j].id != source && clientTable[j].channel == chan)
+               if(clientTable[j].is_open == 1 && clientTable[j].id != source && clientTable[j].channel == chan)
                {
                   strcat(who, clientTable[j].uname);
                   pack(8, 's', 255, source, who, retPacket);
-				  printf("Sending packet: %s\n", retPacket);
+                  printf("Sending packet: %s\n", retPacket);
                   bzero(&who, 44);
                   write(source, retPacket, 50);
                   bzero(&retPacket, 50);
@@ -445,16 +437,41 @@ void commandPacket(char packet[MAX], int source, char chan, int max_fd, int j)
             }
          }
          pack(9, 's', 255, source, " ", retPacket);
-		 printf("Sending packet: %s\n", retPacket);
+         printf("Sending packet: %s\n", retPacket);
          write(source, retPacket, 50);
          bzero(&retPacket, 50);
          break;
    	
       case 2:
       // private message	
+         for(j = 0; j <= max_fd; j++)
+         {
+            if(strcmp(clientTable[j].uname, tag) == 0 && clientTable[j].is_open == 1)
+            {
+               pack(4, 's', source, clientTable[j].id, data, retPacket);
+               printf("Sending packet: %s\n", retPacket);
+               write(source, retPacket, 50);
+               bzero(&retPacket, 50);
+               didFind = 1;
+               break;
+            }
+         }
+       
+         if(didFind == 1)
+         {
+            didFind = 0;
+         }
+         else
+         {
+            pack(5, 's', 255, source, " ", retPacket);
+            printf("Sending packet: %s\n", retPacket);
+            write(source, retPacket, 50);
+            bzero(&retPacket, 50); 
+         }
          break;
    	
       default:
          break;
    }
+   bzero(&packet, 50);
 }
