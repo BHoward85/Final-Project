@@ -1,186 +1,153 @@
-/*
- * chatclient.c
- *
- *  Created on: Oct 20, 2016
- *      Author: marco
- */
+// Main Project
+// Chat Client
 
+#include "client.h"
 
-#include"chatclient.h"
-
-pthread_mutex_t clilock;
-int stillConnected = 1;
+int src = 0;
+int des = 255;
 char room = 'g';
-char toUser[15] = " ";
-char  username[15] = " ";
-int idFromServer;
-int src = 000;
-int dest = 255;
+int trip = 1;
 
-char * login(int sockfd);
-
-int main(int argc, char ** argv)
+int main(int argc, char **argv)
 {
-	int sockfd,len,ret;
+	int sockfd, len, ret; 
+	int n = 0;
+	char userName[15] = " ";
 	struct sockaddr_in saddr;
-	stillConnected = 1;
-	pthread_t clReader, clWriter;
+	char buff[BUFF_SIZE];
+	pthread_t t1;
+	pthread_t t2;
+
 	if(argc != 3)
-	{
-		perror("argv ");
-		exit(0);
-	}//end of if
-
-
-	// creating tcp socket
-	sockfd = socket(AF_INET,SOCK_STREAM,0);
+		return 1;
+	
+	// tcp socket
+	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	saddr.sin_family = AF_INET;
 	saddr.sin_port = htons(atoi(argv[2]));
-
-	//saddr.sin_addr = *(struct in_addr *) *(hostinfo->h_addr_list);
 	saddr.sin_addr.s_addr = inet_addr(argv[1]);
 	len = sizeof(saddr);
+	ret = connect(sockfd, (struct sockaddr *) &saddr, len);
+	
 
-	printf("trying to connect\n");
-	ret = connect(sockfd,(struct sockaddr *)&saddr,len);
 	if(ret == -1)
 	{
 		perror("connect ");
 		exit(1);
-	}//end of if statement for connection
-	bzero(toUser, 15);
-	bzero(username, 15);
-	printf("Trying to login\n");
-	login(sockfd);
+	}
+	
+	login(sockfd, userName);
+	while(TRUE)
+	{	
+		pthread_create(&t1, 0, &reader, (void *) &sockfd);
+		pthread_create(&t2, 0, &writer, (void *) &sockfd);
+		pthread_detach(t1);
+		pthread_detach(t2);
 
-	printf("Socket:%d\n", sockfd);
-	pthread_create(&clReader, 0, (void *)clientReader, &sockfd);
-	pthread_create(&clWriter, 0, (void *)clientWriter, &sockfd);
-	pthread_join(clReader, NULL);
-	pthread_join(clWriter, NULL);
-	close(sockfd);
+		if(trip == 0)
+			break;
+	}
 
 	return 0;
-}//end of main
+}
 
-char * login(int sockfd)
+void login(int sockfd, char* name)
 {
-	//This is where the client gets the username and writes it
-	//TODO: get username from server and return that one
-	printf("please type your user name:\n");
+	char buffer[50] = " ";
 	char packet[44] = " ";
-	fgets(username, 15, stdin);
-	printf("username: %s\n", username);
-	pack(1, room, src, dest, username, packet);
-	printf("%s\n", packet);
-	write(sockfd, packet, 50);
-	char buffer[50];
-	read(sockfd, buffer, 50);
-	printf("%s\n", buffer);
-	src = unpackDese(buffer);
-	return username;
-	//end getting usernameo
-}//end o login
 
-/*
- * This method just reads the messages from the server and prints it with out parsing it.
- */
-void clientReader(int * socketfd)
+	printf("please type your user name:\n");
+
+	read(0, name, 15);
+
+	pack(1, room, src, des, name, packet);
+
+	printf("%s\n", packet);
+
+	write(sockfd, packet, 50);
+
+	read(sockfd, buffer, 50);
+
+	printf("%s\n", buffer);
+
+	src = unpackDese(buffer);
+}
+
+void * writer(void * sockfd)
 {
-	//TODO:
-	char  buffer[1024];
+	char buff[BUFF_SIZE] = " ";
 	char packet[50] = " ";
-	int reader = 1;
-	//room = 'i';
-	while(1)
+	int n = 0;
+
+	while(TRUE)
 	{
-		reader = read(* socketfd, buffer, 50);
-		printf("%s\n", buffer);
-		//pthread_mutex_lock(&clilock);
-		if(reader <= 0 || stillConnected == 0)
+		fgets(buff, 40, stdin);
+		if(buff[0] == '$')
 		{
-			pthread_mutex_lock(&clilock);
-			stillConnected = 0;
-			pthread_mutex_unlock(&clilock);
-			return;
-		}//end of if
-		//pthread_mutex_unlock(&clilock);
-		switch(unpackType(buffer))
+			if(strcmp("$logout\n", buff) == 0 || strcmp("$logoff\n", buff) == 0)
+			{
+				pack(2, room, src, des, buff, packet);
+				write(*(int *)sockfd, packet, 50);
+				trip = 0;
+				pthread_exit(NULL);
+			}//end of if
+			else
+			{
+				pack(3, room, src, des, buff, packet);
+				printf("%s\n", packet);
+				write(*(int *)sockfd, packet, 50);
+				bzero(packet, 50);
+			}//end of else
+		}//end of if statement
+		else
+		{
+			pack(0, room, src, des, buff, packet);
+			printf("<--%s: is now going write\n", packet);
+			n = write(*(int *)sockfd, packet, 40);
+			bzero(packet, 50);
+		}//end of else
+
+		bzero(buff, BUFF_SIZE);
+	}
+}
+
+void * reader(void * sockfd)
+{
+	char buff[BUFF_SIZE] = " ";
+	char packet[50] = " ";
+	int n = 0;
+
+	while(TRUE)
+	{
+		n = read(*(int *)sockfd, buff, 50);
+		printf("%s\n", buff);
+		switch(unpackType(buff))
 		{
 			case 3:
-					pthread_mutex_lock(&clilock);
-					room = unpackChan(buffer);
-					pthread_mutex_unlock(&clilock);
-					printf("-->channel changed to: %s%c\n", buffer, unpackChan(buffer));
+					room = unpackChan(buff);
+					printf("-->channel changed to: %s%c\n", buff, unpackChan(buff));
 					break;
 			case 4:
-				pthread_mutex_lock(&clilock);
-				room = unpackChan(buffer);
-				pthread_mutex_unlock(&clilock);
-				printf("-->channel changed to: %s: %c\n", buffer, unpackChan(buffer));
+				unpackMess(buff, packet);
+				printf("-->PM sent: %s\n", buff);
 				break;
 			case 5:
 			case 6:
+				room = unpackChan(buff);
+				printf("-->channel changed to: %s: %c\n", buff, unpackChan(buff));
+				break;
 			case 7:
 			case 8:
-				unpackMess(packet, buffer);
+				unpackMess(packet, buff);
 				printf("->%s\n", packet);
 				bzero(packet, 50);
 				break;
 			case 9:
 				break;
 			default:
-				printf("-->%s", buffer);
+				printf("-->%s", buff);
 				break;
 		}//end of switch
-		bzero(buffer, 1024);
-		//buffer[0] = '\0';
-	}//end of outer while
-}//end of client Reader
-
-/*
- * This method writes the input from the client and parses it so the server can read it
- */
-void clientWriter(int *socketfd)
-{
-	//TODO:
-	char buffer[40];
-	char packet[50] = " ";
-	int writer = 0;
-	while(1)
-	{
-		fgets(buffer, 40, stdin);
-		if(buffer[0] == '$')
-		{
-			//TODO: create a call to figure out what the escape character wants to do.
-			if(strcmp("$logout\n", buffer) == 0)
-			{
-				pack(2, room, src, dest, buffer, packet);
-				write(*socketfd, packet, 50);
-				pthread_mutex_lock(&clilock);
-				stillConnected = 0;
-				pthread_mutex_unlock(&clilock);
-				return;
-			}//end of if
-			else
-			{
-				pack(3, room, src, dest, buffer, packet);
-				printf("%s\n", packet);
-				write(*socketfd, packet, 50);
-				bzero(packet, 50);
-			}//end of else
-		}//end of if statement
-		else
-		{
-			pack(0, room, src, dest, buffer, packet);
-			printf("<--%s: is now going write\n", packet);
-			writer = write(*socketfd, packet, 40);
-			bzero(packet, 50);
-			//free(packet);
-		}//end of else
-
-		bzero(buffer, 40);
-
-	}//end of outer while
-}//end of clientwriter
-
+		bzero(buff, BUFF_SIZE);
+	}
+}
