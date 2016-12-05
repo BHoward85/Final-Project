@@ -91,9 +91,11 @@ void clientReader(int * socketfd)
 	char  buffer[1024];
 	char packet[50] = " ";
 	int reader = 1;
+	//room = 'i';
 	while(1)
 	{
-		reader = read(* socketfd, buffer, 40);
+		reader = read(* socketfd, buffer, 50);
+		printf("%s\n", buffer);
 		//pthread_mutex_lock(&clilock);
 		if(reader <= 0 || stillConnected == 0)
 		{
@@ -105,9 +107,17 @@ void clientReader(int * socketfd)
 		//pthread_mutex_unlock(&clilock);
 		switch(unpackType(buffer))
 		{
+			case 3:
+					pthread_mutex_lock(&clilock);
+					room = unpackChan(buffer);
+					pthread_mutex_unlock(&clilock);
+					printf("-->channel changed to: %s%c\n", buffer, unpackChan(buffer));
+					break;
 			case 4:
+				pthread_mutex_lock(&clilock);
 				room = unpackChan(buffer);
-				printf("-->%s\n", buffer);
+				pthread_mutex_unlock(&clilock);
+				printf("-->channel changed to: %s: %c\n", buffer, unpackChan(buffer));
 				break;
 			case 5:
 			case 6:
@@ -160,24 +170,16 @@ void clientWriter(int *socketfd)
 				bzero(packet, 50);
 			}//end of else
 		}//end of if statement
-		else if(strcmp(buffer, "quit\n") == 0 || writer == -1 || stillConnected == 0)
-		{
-			pthread_mutex_lock(&clilock);
-			write(*socketfd, "Bye!", strlen("Bye!") * sizeof(char));
-			stillConnected = 0;
-			pthread_mutex_unlock(&clilock);
-			return;
-		}//end of if
 		else
 		{
 			pack(0, room, src, dest, buffer, packet);
-			printf("%s: is now going write\n", packet);
+			printf("<--%s: is now going write\n", packet);
 			writer = write(*socketfd, packet, 40);
 			bzero(packet, 50);
 			//free(packet);
 		}//end of else
-		bzero(buffer, 40);
 
+		bzero(buffer, 40);
 
 	}//end of outer while
 }//end of clientwriter
